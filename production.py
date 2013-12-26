@@ -38,8 +38,8 @@ def verify(target):
 	if not security.verify_kiosk:
 		return redirect("http://www.dimigo.hs.kr")
 
-	#sid = request.args.get('id')
-	sid_json = request.args.post('data');
+	#sid = request.args.get('RFIDCode')
+	sid_json = request.form('data');
 	sid = json.loads(sid_json)['RFIDCode'];
 
 	if sid is not None:
@@ -64,7 +64,7 @@ def get_meal(date, time, action=None):
 		#to register
 		if action == "add":
 			try:
-				all_data = json.loads(request.args.post('data'))
+				all_data = json.loads(request.form('data'))
 				meal_json = all_data['meal']
 				nut_json = all_data['nutrition']
 				nat_json = all_data['nation']
@@ -119,7 +119,7 @@ def gift_meal_coupon(time, from_id, to_id):
 
 @app.route('/meal/new', methods=['POST'])
 def add_new_meal():
-	meal_data_json = request.args.post("data")
+	meal_data_json = request.form("data")
 	meal_data = json.loads(meal_data_json)
 	try:
 		for md in meal_data:

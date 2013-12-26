@@ -42,7 +42,7 @@ class ResultObject:
 			"mealName" : mealtable.title,
 			"foodList" : json.loads(mealtable.meal_json)
 		}
-		#whereis 'mealstate' db?
+		#####################whereis 'mealstate' db?
 		mealstate_obj = None
 		self._res['meal'] = {"mealData" : mealdata_obj, "mealState" : mealstate_obj}
 		
