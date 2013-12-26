@@ -4,7 +4,8 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from datetime import datetime, time, date
 from db_engine import *
 from db_table import *
-from meal_result import ResultObject
+from meal_result import ResultObject, AuthResult
+from meal_time import Mealtime
 
 #*'getting' means returning ORM object
 
@@ -13,35 +14,6 @@ class Today:
 	def today():
 		return str(datetime.today().date())
 
-	#based on DIMIGO's meal timetable
-	#will store on MEMCACHE later
-	@staticmethod
-	def mealtype():
-		b_start	 = Today.strtot("7:00:00")
-		b_end	 = Today.strtot("9:00:00")
-		l_start	 = Today.strtot("12:00:00")
-		l_end	 = Today.strtot("13:00:00")
-		d_start	 = Today.strtot("18:00:00")
-		d_end	 = Today.strtot("19:30:00")
-		s_start	 = Today.strtot("20:50:00")
-		s_end	 = Today.strtot("21:30:00")
-		now = datetime.today().time()
-
-		if b_start <= now <= b_end:
-			return "B"
-		elif l_start <= now <= l_end:
-			return "L"
-		elif d_start <= now <= d_end:
-			return "D"
-		elif s_start <= now <= s_end:
-			return "S"
-		else:
-			return None
-		return "B"
-
-	@staticmethod
-	def strtot(time_str):
-		return datetime.strptime(time_str, "%H:%M").time()
 
 class ClassHelper:
 	@staticmethod
@@ -62,9 +34,11 @@ class Meal:
 		self.db = Intra_Database()
 		self.res = ResultObject()
 
+	#131227 야근
 	def verify(self, sid, target):
 		#verify mealtime or not
-		fid = self.get_now()["id"]
+		#이거 뭔가 마음에 안듬
+		fid = self.get_now()['meal']['id']
 		if fid is None:
 			self.res.raise_error(ResultObject.DataError, "not meal time now")
 
@@ -78,67 +52,88 @@ class Meal:
 
 
 		target_map = {"student" : "s", "teacher" : "t"}
-		if target_map[target] != user_by_bid.user_type:
-			self.res.raise_error(ResultObject.UserError, "user_type mismatch with bnum")
+		try:
+			if target_map[target] != user_by_bid.user_type:
+				self.res.raise_error(ResultObject.UserError, "user_type mismatch with bnum")
+		except KeyError:
+			self.res.raise_error(ResultObject.UserError, "unknown target. target must be either student or teacher")
 
 		#querying meal permission
+		auth_result = AuthResult.NONE
 		try:
-			meal_result = self.db.session.query(Table_Meal_log).filter_by(food_id=fid).filter_by(user_id=user_by_bid.id)
-			meal_result = meal_result.one()
-			if meal_result.is_allowed == False:
-				#return {"meal" : "no", "username" : user_by_bid.user_name}
+			if user_by_bid.user_type == "s":
+				meal_result = self.db.session.query(Table_Meal_log).join(Table_User_S).\
+				filter_by(user_id=user_by_bid.id).filter_by(food_id=fid).one()
 
-			elif user_by_bid.user_type == "s" and meal_result.count >= 1:
-				#return {"meal" : "student.already_yumyum", "username" : user_by_bid.user_name}
+				#student can only eat meal once
+				if meal_result.is_allowed == True and meal_result.count < 1:
+					meal_result.count += 1
+					self.db.session.commit()
+					auth_result = AuthResult.SUCCESS
+				elif meal_result.is_allowed == True and meal_result.count >= 1:
+					auth_result = AuthResult.ALREADY_EATEN
+				else:
+					auth_result = AuthResult.BANNED
 
-			else:
-				meal_result.count += 1
-				#does it work? yes! 
-				self.db.session.commit()
-##########				return {"user" : user_by_bid}
+				self.res.from_User_Student(user_by_bid.user_name, meal_result, auth_result)
+
+			elif user_by_bid.user_type == "t":
+				meal_result = self.db.session.query(Table_Meal_log).join(Table_User_T).\
+				filter_by(user_id=user_by_bid.id).filter_by(food_id=fid).one()
+
+				#teacher can eat meal multiple times
+				if meal_result.is_allowed == True:
+					meal_result.count += 1
+					self.db.session.commit()
+					auth_result = AuthResult.SUCCESS
+				else:
+					auth_result = AuthResult.BANNED
+
+				self.res.from_User_Student(user_by_bid.user_name, meal_result, auth_result)
+
 		except MultipleResultsFound, e:
 			self.res.raise_error(self.res.DataError, "duplicate result", e)
 		except NoResultFound, e:
 			self.res.raise_error(self.res.DataError, "Meal_log not found", e)
+		except Exception, e:
+			self.res.raise_error(self.res.DataError, "general Database error", e)
 
 		return self.res.get()
 
 	#getting meal info by date and mealtime
-	def get_by_dt(self, meal_date, meal_time):
-		#returns all object(BLDS)
+	def get_by_dt(self, meal_date, meal_time=None, get_full=False):
+
 		if meal_time is None:
+			#returns all object(BLDS)
 			pass
 		else:
 			try:
-				meal_result = self.db.session.query(Table_Meal).filter_by(date=meal_date).filter_by(meal_time=meal_time)
-				meal_result = meal_result.one()
+				meal_result = self.db.session.query(Table_Meal).\
+				filter_by(date=meal_date).filter_by(meal_time=meal_time).one()
 
-				#object to JSON conversion?
-				meal_result = ClassHelper.row2dict(meal_result)
-				#convert datetime.date to string
-				if type(meal_result["date"]) is date:
-					meal_result["date"] = str(meal_result["date"])
-				meal_result["meal"] = "yes"
-#########				return meal_result
+				self.res.from_Table_Meal(meal_result)
 
 			except MultipleResultsFound, e:
 				self.res.raise_error(self.res.DataError, "duplicate result", e)
 			except NoResultFound, e:
-				self.res.raise_error(self.res.DataError, "no result found")
+				self.res.raise_error(self.res.DataError, "no result found", e)
+			except Exception, e:
+				self.res.raise_error(self.res.DataError, "general Database error", e)
 
 		return self.res.get()
 
 
 	#getting current meal info
 	def get_now(self, get_full=None):
-		mealtype = Today.mealtype()
+		mealtype = Mealtime.get_current()
 		if mealtype is None:
 			self.res.empty_Meal()
 		else:
 			if get_full is None:
-				return self.get_by_dt(Today.today(), Today.mealtype())
+				return self.get_by_dt(Today.today(), mealtype, False)
 			else:
-				raise Exception()
+				return self.get_by_dt(Today.today(), mealtype, True)
+		return self.res.get()
 
 
 #NotImplemented below
@@ -149,7 +144,7 @@ class Meal:
 			self.db.session.add(meal_row)
 			self.db.session.commit()
 		except Exception, e:
-			self.res.raise_error(self.res.DataError, str(e))
+			self.res.raise_error(self.res.DataError, e)
 
 		return self.res.get()
 

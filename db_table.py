@@ -50,3 +50,21 @@ class Table_User(Base):
 	user_name = Column(String(10))	
 	user_type = Column(String(1))
 
+class Table_User_S(Base):
+	__tablename__ = "intra_user_student"
+	
+	id = Column(Integer, primary_key=True)
+	user_id = Column(Integer, ForeignKey("intra_user.id"))
+	grade = Column(Integer)
+	cls = Column('class', Integer)
+	number = Column(Integer)
+
+class Table_User_T(Base):
+	__tablename__ = "intra_user_teacher"
+	
+	id = Column(Integer, primary_key=True)
+	user_id = Column(Integer, ForeignKey("intra_user.id"))
+	department = Column(String)
+	position = Column(String)
+
+
