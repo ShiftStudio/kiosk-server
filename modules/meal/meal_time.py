@@ -49,7 +49,7 @@ class Mealtime:
 	@classmethod
 	def get_current(cls):
 		now = datetime.today().time()
-
+##debugCode
 		return "B"
 
 		if cls.b_start <= now <= cls.b_end:

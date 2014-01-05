@@ -2,8 +2,9 @@
 
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from datetime import datetime, time, date
-from db_engine import *
-from db_table import *
+from ..database.db_engine import *
+
+from meal_db_table import *
 from meal_result import ResultObject, AuthResult
 from meal_time import Mealtime
 
@@ -38,9 +39,11 @@ class Meal:
 	def verify(self, sid, target):
 		#verify mealtime or not
 		#이거 뭔가 마음에 안듬
-		fid = self.get_now()['meal']['id']
+		fid = self.get_now()['meal']
 		if fid is None:
 			self.res.raise_error(ResultObject.DataError, "not meal time now")
+		else:
+			fid = fid['id']
 
 		#querying user objects from barcode
 		try:
@@ -133,8 +136,7 @@ class Meal:
 				return self.get_by_dt(Today.today(), mealtype, False)
 			else:
 				return self.get_by_dt(Today.today(), mealtype, True)
-		return self.res.get()
-
+		
 
 #NotImplemented below
 
