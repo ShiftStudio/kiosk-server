@@ -3,6 +3,7 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 class Raiseable:
 	DataError = 0
 	UserError = 1
+	Debug = 99
 
 	error_map = {
 

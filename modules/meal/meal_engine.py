@@ -36,23 +36,25 @@ class Meal:
 		self.res = ResultObject()
 
 	#131227 야근
-	def verify(self, sid, target):
+	def verify(self, sid, target, t_cnt=None):
 		#verify mealtime or not
-		#이거 뭔가 마음에 안듬
-		fid = self.get_now()['meal']
-		if fid is None:
-			self.res.raise_error(ResultObject.DataError, "not meal time now")
-		else:
-			fid = fid['id']
+		try:
+			fid = self.get_now_id()
+			if fid is None:
+				self.res.raise_error(ResultObject.DataError, "not meal time now")
+		except NoResultFound, e:
+			self.res.raise_error(ResultObject.DataError, "no meal info registered", e)
+			return self.res.get()
 
 		#querying user objects from barcode
 		try:
 			user_by_bid = self.db.session.query(Table_User).filter_by(b_id=sid).one()
 		except MultipleResultsFound, e:
 			self.res.raise_error(ResultObject.UserError, "duplicate bnum of user", e)
+			return self.res.get()
 		except NoResultFound, e:
 			self.res.raise_error(ResultObject.UserError, "invalid bnum for user", e)
-
+			return self.res.get()
 
 		target_map = {"student" : "s", "teacher" : "t"}
 		try:
@@ -60,39 +62,41 @@ class Meal:
 				self.res.raise_error(ResultObject.UserError, "user_type mismatch with bnum")
 		except KeyError:
 			self.res.raise_error(ResultObject.UserError, "unknown target. target must be either student or teacher")
+			return self.res.get()
 
 		#querying meal permission
 		auth_result = AuthResult.NONE
 		try:
 			if user_by_bid.user_type == "s":
-				meal_result = self.db.session.query(Table_Meal_log).join(Table_User_S).\
-				filter_by(user_id=user_by_bid.id).filter_by(food_id=fid).one()
+				meal = self.db.session.query(Table_Meal_Student).\
+				filter_by(food_id=fid).filter_by(user_id=user_by_bid.id).one()
 
 				#student can only eat meal once
-				if meal_result.is_allowed == True and meal_result.count < 1:
-					meal_result.count += 1
+				if meal.is_allowed == True and meal.count < 1:
+					meal.count += 1
 					self.db.session.commit()
 					auth_result = AuthResult.SUCCESS
-				elif meal_result.is_allowed == True and meal_result.count >= 1:
+				elif meal.is_allowed == True and meal.count >= 1:
 					auth_result = AuthResult.ALREADY_EATEN
 				else:
 					auth_result = AuthResult.BANNED
 
-				self.res.from_User_Student(user_by_bid.user_name, meal_result, auth_result)
+				self.res.from_User_Student(user_by_bid.user_name, meal, auth_result)
 
 			elif user_by_bid.user_type == "t":
-				meal_result = self.db.session.query(Table_Meal_log).join(Table_User_T).\
-				filter_by(user_id=user_by_bid.id).filter_by(food_id=fid).one()
+				meal = self.db.session.query(Table_Meal_Teacher).\
+				filter_by(food_id=fid).filter_by(user_id=user_by_bid.id).one()
 
 				#teacher can eat meal multiple times
-				if meal_result.is_allowed == True:
-					meal_result.count += 1
+				if meal.is_allowed == True:
+					meal.count += t_cnt
 					self.db.session.commit()
 					auth_result = AuthResult.SUCCESS
 				else:
 					auth_result = AuthResult.BANNED
 
-				self.res.from_User_Teacher(user_by_bid.user_name, meal_result, auth_result)
+				self.res.from_User_Teacher(user_by_bid.user_name, meal, auth_result)
+				#self.res.raise_error(self.res.Debug, "NotImplemented")
 
 		except MultipleResultsFound, e:
 			self.res.raise_error(self.res.DataError, "duplicate result", e)
@@ -137,7 +141,17 @@ class Meal:
 				return self.get_by_dt(Today.today(), mealtype, False)
 			else:
 				return self.get_by_dt(Today.today(), mealtype, True)
-		
+
+	#getting current meal info
+	def get_now_id(self):
+		mealtype = Mealtime.get_current()
+		if mealtype is None:
+			return None
+		else:				
+			meal_result = self.db.session.query(Table_Meal).\
+				filter_by(date=Today.today()).filter_by(meal_time=mealtype).one()
+			return meal_result.id
+
 
 #NotImplemented below
 

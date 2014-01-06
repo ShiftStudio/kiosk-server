@@ -13,10 +13,11 @@ class AuthResult:
 	NONE = -199
 
 	Messages = {
-		"0" : "석쎼스",
-		"-1" : "얼레디_이튼",
-		"-2" : "밴드",
-		"-10" : "인벨리드_유저"	
+		0 : "석쎼스",
+		-101 : "얼레디_이튼",
+		-102 : "밴드",
+		-110 : "인벨리드_유저",
+		-199 : "논"	
 	}
 
 class ResultObject(Raiseable):
@@ -44,6 +45,7 @@ class ResultObject(Raiseable):
 		}
 		#####################whereis 'mealstate' db?
 		mealstate_obj = None
+		#id is required for "verify" obj
 		self._res['meal'] = {"mealData" : mealdata_obj, "mealState" : mealstate_obj}
 		
 	def from_User_Student(self, user_name, conctable, auth_result):
@@ -56,9 +58,10 @@ class ResultObject(Raiseable):
 		}
 		event_new_obj = {
 			"status" : auth_result,
-			"message" : AuthResult.Messages[str(auth_result)]
+			"message" : AuthResult.Messages[auth_result]
 		}
 		self._res['user'] = user_new_obj
+		self._res['event'] = event_new_obj
 		
 	def from_User_Teacher(self, user_name, conctable, auth_result):
 		user_new_obj = {
@@ -69,9 +72,10 @@ class ResultObject(Raiseable):
 		}
 		event_new_obj = {
 			"status" : auth_result,
-			"message" : AuthResult.Messages[str(auth_result)]
+			"message" : AuthResult.Messages[auth_result]
 		}
 		self._res['user'] = user_new_obj
+		self._res['event'] = event_new_obj
 
 	def empty_Meal(self):
 		self._res['meal'] = ResultObject.MealObject_Empty

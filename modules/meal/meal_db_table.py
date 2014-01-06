@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, Boolean, String, Date, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import sql
+from sqlalchemy.orm import mapper, column_property
 
 #print sqlalchemy.version
 Base = declarative_base()
@@ -56,7 +58,7 @@ class Table_User_S(Base):
 	id = Column(Integer, primary_key=True)
 	user_id = Column(Integer, ForeignKey("intra_user.id"))
 	grade = Column(Integer)
-	cls = Column('class', Integer)
+	cls = Column(Integer)
 	number = Column(Integer)
 
 class Table_User_T(Base):
@@ -66,5 +68,25 @@ class Table_User_T(Base):
 	user_id = Column(Integer, ForeignKey("intra_user.id"))
 	department = Column(String)
 	position = Column(String)
+
+#Joined Table : Declarative
+class Table_Meal_Student(Base):
+	__table__ = sql.join(Table_Meal_log.__table__, Table_User_S.__table__,
+                           Table_Meal_log.__table__.c.user_id == Table_User_S.__table__.c.user_id)
+
+	user_id = column_property(Table_Meal_log.__table__.c.user_id, Table_User_S.__table__.c.user_id)
+	s_id = Table_User_S.__table__.c.id
+	m_id = Table_Meal_log.__table__.c.id
+
+class Table_Meal_Teacher(Base):
+	__table__ = sql.join(Table_Meal_log.__table__, Table_User_T.__table__,
+                           Table_Meal_log.__table__.c.user_id == Table_User_T.__table__.c.user_id)
+
+	user_id = column_property(Table_Meal_log.__table__.c.user_id, Table_User_T.__table__.c.user_id)
+	t_id = Table_User_T.__table__.c.id
+	m_id = Table_Meal_log.__table__.c.id
+
+
+
 
 
