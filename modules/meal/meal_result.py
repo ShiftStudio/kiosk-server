@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
+from ..database.db_raiseable import Raiseable
+
 from meal_time import Mealtime
 import json
 
 class AuthResult:
 	SUCCESS = 0
-	ALREADY_EATEN = -1
-	BANNED = -2
-	INVALID_USER = -10
-	NONE = -99
+	ALREADY_EATEN = -101
+	BANNED = -102
+	INVALID_USER = -110
+	NONE = -199
 
 	Messages = {
 		"0" : "석쎼스",
@@ -17,9 +19,7 @@ class AuthResult:
 		"-10" : "인벨리드_유저"	
 	}
 
-class ResultObject:
-	DataError = 0
-	UserError = 1
+class ResultObject(Raiseable):
 	MealObject_Empty = {"mealData" : "", "mealState" : ""}
 	#user, event, meal obj
 
@@ -58,23 +58,24 @@ class ResultObject:
 			"status" : auth_result,
 			"message" : AuthResult.Messages[str(auth_result)]
 		}
-		self._res['user'] = meal_new_obj
+		self._res['user'] = user_new_obj
 		
 	def from_User_Teacher(self, user_name, conctable, auth_result):
-		pass
+		user_new_obj = {
+			"name" : user_name,
+        	"department": conctable.department,
+        	"position": conctable.position,
+			"profileUrl" : None
+		}
+		event_new_obj = {
+			"status" : auth_result,
+			"message" : AuthResult.Messages[str(auth_result)]
+		}
+		self._res['user'] = user_new_obj
 
 	def empty_Meal(self):
 		self._res['meal'] = ResultObject.MealObject_Empty
 		
-	
-	def raise_error(self, etype, emsg, e=None):
-		# -1 represents an error
-		self._res['event']['status'] = -1
-		if e is None:
-			self._res['event'].update({"error_type" : etype, "error_msg" : emsg})
-		else:
-			self._res['event'].update({"error_type" : etype, "error_msg" : emsg, "error_dmp" : str(e)})
-
 		# del self._res['user']
 		# del self._res['meal']
 

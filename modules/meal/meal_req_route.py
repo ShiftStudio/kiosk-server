@@ -31,7 +31,8 @@ def redr_m():
 
 @app.route('/meal/verify/<target>', methods=['POST'])
 def verify(target):
-	global ext_status
+	global ext_status, s_res
+
 	if not security.verify_kiosk:
 		return redirect("http://www.dimigo.hs.kr")
 
@@ -63,6 +64,7 @@ meal_type = ('B', 'L', 'D', 'S')
 @app.route('/meal/<date>/<time>')
 @app.route('/meal/<date>/<time>/<action>')
 def get_meal(date, time, action=None):
+	global ext_status, s_res
 
 	if time not in meal_type:
 		ext_status = "invalid_target"
@@ -88,6 +90,7 @@ def get_meal(date, time, action=None):
 #오늘 급식 정보 가져오기, returns array
 @app.route('/meal/today/')
 def get_today_meal(full=None):
+
 	today_arr = []
 	for mt in meal_type:
 		today_arr.append(meal.get_by_dt(Today.today(), mt))

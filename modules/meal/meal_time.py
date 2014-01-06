@@ -31,10 +31,24 @@ class Mealtime:
 
 		#use memcached later
 	def get_start(self):
-		pass
+		if self.mt == "B":
+			return str(Mealtime.b_start)
+		elif self.mt == "L":
+			return str(Mealtime.l_start)
+		elif self.mt == "D":
+			return str(Mealtime.d_start)
+		elif self.mt == "S":
+			return str(Mealtime.s_start)
 
 	def get_stop(self):
-		pass
+		if self.mt == "B":
+			return str(Mealtime.b_end)
+		elif self.mt == "L":
+			return str(Mealtime.l_end)
+		elif self.mt == "D":
+			return str(Mealtime.d_end)
+		elif self.mt == "S":
+			return str(Mealtime.s_end)
 
 
 	def get_start_s(self):

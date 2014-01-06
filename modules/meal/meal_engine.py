@@ -92,7 +92,7 @@ class Meal:
 				else:
 					auth_result = AuthResult.BANNED
 
-				self.res.from_User_Student(user_by_bid.user_name, meal_result, auth_result)
+				self.res.from_User_Teacher(user_by_bid.user_name, meal_result, auth_result)
 
 		except MultipleResultsFound, e:
 			self.res.raise_error(self.res.DataError, "duplicate result", e)
@@ -151,8 +151,7 @@ class Meal:
 		return self.res.get()
 
 
-#두 번 먹는게 가능함?
-
+	#두 번 먹는게 가능함?
 	def gift(self, meal_date, meal_time, u_from, u_to):	
 		try:
 			meal_result = self.db.session.query(Table_Meal).filter_by(date=meal_date).filter_by(meal_time=meal_time)
