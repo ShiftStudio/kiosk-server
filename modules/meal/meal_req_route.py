@@ -38,16 +38,19 @@ def verify(target):
 
 	#sid = request.args.get('RFIDCode')
 	try:
-		sid_json = request.form['data']
-		sid = json.loads(sid_json)['RFIDCode']
+		sid_json = json.loads(request.form['data'])
+		sid = sid_json['RFIDCode']
 		
 		#int to string conversion
 		if type(sid) is int:
 			sid = str(sid)
 		
 		if sid is not None:
-			if target == "student" or "teacher":
+			if target == "student":
 				s_res = meal.verify(sid, target)
+			elif target == "teacher":
+				t_cnt = sid_json['MealCount']
+				s_res = meal.verify(sid, target, t_cnt)
 			else:
 				ext_status = "invalid_target"
 		else:
