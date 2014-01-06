@@ -100,6 +100,7 @@ class Meal:
 			self.res.raise_error(self.res.DataError, "Meal_log not found", e)
 		except Exception, e:
 			self.res.raise_error(self.res.DataError, "general Database error", e)
+			self.db.session.rollback()
 
 		return self.res.get()
 
@@ -147,6 +148,7 @@ class Meal:
 			self.db.session.commit()
 		except Exception, e:
 			self.res.raise_error(self.res.DataError, e)
+			self.db.session.rollback()
 
 		return self.res.get()
 
