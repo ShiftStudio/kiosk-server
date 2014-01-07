@@ -56,8 +56,9 @@ class Meal:
 		try:
 			if target_map[target] != user_by_bid.user_type:
 				self.res.raise_error(ResultObject.UserError, "user_type mismatch with bnum")
-		except KeyError:
-			self.res.raise_error(ResultObject.UserError, "TargetMap")
+				return self.res.get()
+		except KeyError, e:
+			self.res.raise_error(ResultObject.UserError, "TargetMap", e)
 			return self.res.get()
 
 		#querying meal permission
@@ -80,6 +81,10 @@ class Meal:
 				self.res.from_User_Student(user_by_bid.user_name, meal, auth_result)
 
 			elif user_by_bid.user_type == "t":
+				if t_cnt < 1 or t_cnt > 10:
+					self.res.raise_error(ResultObject.DataError, "t_cnt out of range : must between 1 and 10")
+					return self.res.get()
+
 				meal = self.db.session.query(Table_Meal_Teacher).\
 				filter_by(food_id=fid).filter_by(user_id=user_by_bid.id).one()
 

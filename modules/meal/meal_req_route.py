@@ -31,8 +31,9 @@ def redr_m():
 
 @app.route('/meal/verify/<target>', methods=['POST'])
 def verify(target):
+	clear_response()
+	
 	global ext_status, s_res
-
 	if not security.verify_kiosk:
 		return redirect("http://www.dimigo.hs.kr")
 
@@ -71,8 +72,9 @@ meal_type = ('B', 'L', 'D', 'S')
 @app.route('/meal/<date>/<time>')
 @app.route('/meal/<date>/<time>/<action>')
 def get_meal(date, time, action=None):
+	clear_response()
+	
 	global ext_status, s_res
-
 	if time not in meal_type:
 		ext_status = "invalid_target"
 	else:
@@ -97,6 +99,7 @@ def get_meal(date, time, action=None):
 #오늘 급식 정보 가져오기, returns array
 @app.route('/meal/today/')
 def get_today_meal(full=None):
+	clear_response()	
 
 	today_arr = []
 	for mt in meal_type:
@@ -112,6 +115,7 @@ def get_today_meal_full():
 #현재 급식 정보 가져오기, 없을 수도 있음
 @app.route('/meal/now/')
 def get_now_meal():
+	clear_response()	
 
 	now_meal = meal.get_now()
 	return make_json_response(now_meal)
@@ -119,7 +123,8 @@ def get_now_meal():
 #현재 급식 현황(MealState) 가져오기
 @app.route('/meal/now/state/')
 def get_now_state():
-
+	clear_response()
+	
 	now_meal = meal.get_now_state()
 	return make_json_response(now_meal)
 
@@ -127,6 +132,8 @@ def get_now_state():
 #식권 선물하기는 아무때나 가능함
 @app.route('/meal/gift/<time>/<from_id>/to/<to_id>')
 def gift_meal_coupon(time, from_id, to_id):
+	clear_response()
+	
 	global s_res
 	#잔류식권도 선물이 가능하여 시간별로 나누어 놓음
 	if time not in meal_type:
@@ -138,6 +145,8 @@ def gift_meal_coupon(time, from_id, to_id):
 
 @app.route('/meal/new', methods=['POST'])
 def add_new_meal():
+	clear_response()
+	
 	meal_data_json = request.form["data"]
 	meal_data = json.loads(meal_data_json)
 
@@ -145,6 +154,11 @@ def add_new_meal():
 	# 	meal.add(md)
 	# return make_json_response()
 
+def clear_response():
+	global ext_status
+	ext_status = 0
+	s_res.clear()
+	
 def make_json_response(new_objects=None):
 
 	if new_objects is None:
