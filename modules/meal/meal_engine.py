@@ -99,7 +99,7 @@ class Meal:
 				#self.res.raise_error(self.res.Debug, "NotImplemented")
 
 		except MultipleResultsFound, e:
-			self.res.raise_error(self.res.DataError, "duplicate result", e)
+			self.res.raise_error(self.res.DataError, "duplicate result of MealData", e)
 		except NoResultFound, e:
 			self.res.raise_error(self.res.DataError, "Meal_log not found", e)
 		except Exception, e:

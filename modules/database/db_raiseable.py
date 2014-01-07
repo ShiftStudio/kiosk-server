@@ -21,9 +21,9 @@ class Raiseable:
 		try:
 			self._res['event']['status'] = Raiseable.error_map[emsg]
 		except KeyError:
-			if e is MultipleResultsFound:
+			if type(e) is MultipleResultsFound:
 				self._res['event']['status'] = -301
-			elif e is NoResultFound:
+			elif type(e) is NoResultFound:
 				self._res['event']['status'] = -302
 			else:
 				self._res['event']['status'] = -1

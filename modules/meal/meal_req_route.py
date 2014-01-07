@@ -29,7 +29,7 @@ def redr_m():
 #2. /meal/teacher/verify?i=sth_to_go
 #3. /meal/student/verify?i=sth_to_go
 
-@app.route('/meal/verify/<target>/', methods=['POST'])
+@app.route('/meal/verify/<target>', methods=['POST'])
 def verify(target):
 	global ext_status, s_res
 
@@ -68,8 +68,8 @@ def verify(target):
 meal_type = ('B', 'L', 'D', 'S')
 
 #특정 날짜의 조/중/석/간식 중 하나를 JSON Format으로 받기
-@app.route('/meal/<date>/<time>/')
-@app.route('/meal/<date>/<time>/<action>/')
+@app.route('/meal/<date>/<time>')
+@app.route('/meal/<date>/<time>/<action>')
 def get_meal(date, time, action=None):
 	global ext_status, s_res
 
@@ -123,7 +123,7 @@ def get_now_state():
 
 
 #식권 선물하기는 아무때나 가능함
-@app.route('/meal/gift/<time>/<from_id>/to/<to_id>/')
+@app.route('/meal/gift/<time>/<from_id>/to/<to_id>')
 def gift_meal_coupon(time, from_id, to_id):
 	#잔류식권도 선물이 가능하여 시간별로 나누어 놓음
 	if time not in meal_type:
@@ -133,7 +133,7 @@ def gift_meal_coupon(time, from_id, to_id):
 		return make_json_response(ext_status, s_res)
 		
 
-@app.route('/meal/new/', methods=['POST'])
+@app.route('/meal/new', methods=['POST'])
 def add_new_meal():
 	meal_data_json = request.form["data"]
 	meal_data = json.loads(meal_data_json)
