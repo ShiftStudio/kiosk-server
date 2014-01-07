@@ -63,7 +63,7 @@ def verify(target):
 		ext_status = "invalid_json"
 		s_res = {"error" : str(e)}
 
-	return make_json_response(ext_status, s_res);
+	return make_json_response();
 
 meal_type = ('B', 'L', 'D', 'S')
 
@@ -92,7 +92,7 @@ def get_meal(date, time, action=None):
 		else:
 			s_res = meal.get_by_dt(date, time)
 
-	return make_json_response(ext_status, s_res)
+	return make_json_response()
 
 #오늘 급식 정보 가져오기, returns array
 @app.route('/meal/today/')
@@ -103,7 +103,7 @@ def get_today_meal(full=None):
 		today_arr.append(meal.get_by_dt(Today.today(), mt))
 	s_res = {"meal_arr" : today_arr}
 
-	return make_json_response(ext_status, s_res)
+	return make_json_response()
 
 @app.route('/meal/today/full/')
 def get_today_meal_full():
@@ -112,43 +112,47 @@ def get_today_meal_full():
 #현재 급식 정보 가져오기, 없을 수도 있음
 @app.route('/meal/now/')
 def get_now_meal():
+
 	now_meal = meal.get_now()
-	return make_json_response(ext_status, now_meal)
+	return make_json_response(now_meal)
 
 #현재 급식 현황(MealState) 가져오기
 @app.route('/meal/now/state/')
 def get_now_state():
+
 	now_meal = meal.get_now_state()
-	return make_json_response(ext_status, now_meal)
+	return make_json_response(now_meal)
 
 
 #식권 선물하기는 아무때나 가능함
 @app.route('/meal/gift/<time>/<from_id>/to/<to_id>')
 def gift_meal_coupon(time, from_id, to_id):
+	global s_res
 	#잔류식권도 선물이 가능하여 시간별로 나누어 놓음
 	if time not in meal_type:
 		ext_status = "invalid_target"
 	else:
 		s_res = meal.gift(Today.today(), time, from_id, to_id)
-		return make_json_response(ext_status, s_res)
+		return make_json_response()
 		
 
 @app.route('/meal/new', methods=['POST'])
 def add_new_meal():
 	meal_data_json = request.form["data"]
 	meal_data = json.loads(meal_data_json)
-	try:
-		for md in meal_data:
-			meal.add(md)
-		return make_json_response(ext_status)
-	except Exception, e:
-		return make_json_response("error", {"error_dmp" : str(e)})
+
+	# for md in meal_data:
+	# 	meal.add(md)
+	# return make_json_response()
+
+def make_json_response(new_objects=None):
+
+	if new_objects is None:
+		s_res.update({"ext_status" : ext_status})
+		return json.jsonify(s_res)
+	else:
+		new_objects.update({"ext_status" : ext_status})
+		return json.jsonify(new_objects)
 
 
-def make_json_response(ext_status, objects=None):
-	if objects is None:
-		return json.jsonify({"ext_status" : ext_status})
-
-	objects["ext_status"] = ext_status
-	return json.jsonify(objects)
 

@@ -6,6 +6,11 @@ cIntra_user_id = "closeapi"
 cIntra_user_pw = "82YwNQxLvMQeGeVx"
 cIntra_uesr_db = "closeapi"
 
+# cIntra_user_id = "root"
+# cIntra_user_pw = "Qawsedrf1234"
+# cIntra_uesr_db = "intra"
+
+
 #from ccolor.py
 RED = '\033[91m'		#red
 WHITE = '\033[0m'		#ffffff

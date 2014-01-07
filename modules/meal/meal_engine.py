@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from datetime import datetime, time, date
 from ..database.db_engine import *
 
@@ -42,18 +41,15 @@ class Meal:
 			fid = self.get_now_id()
 			if fid is None:
 				self.res.raise_error(ResultObject.DataError, "not meal time now")
-		except NoResultFound, e:
-			self.res.raise_error(ResultObject.DataError, "no meal info registered", e)
+		except Exception, e:
+			self.res.raise_error(ResultObject.DataError, "Meal_Now", e)
 			return self.res.get()
 
 		#querying user objects from barcode
 		try:
 			user_by_bid = self.db.session.query(Table_User).filter_by(b_id=sid).one()
-		except MultipleResultsFound, e:
-			self.res.raise_error(ResultObject.UserError, "duplicate bnum of user", e)
-			return self.res.get()
-		except NoResultFound, e:
-			self.res.raise_error(ResultObject.UserError, "invalid bnum for user", e)
+		except Exception, e:
+			self.res.raise_error(ResultObject.UserError, "UserbyBarcode", e)
 			return self.res.get()
 
 		target_map = {"student" : "s", "teacher" : "t"}
@@ -61,7 +57,7 @@ class Meal:
 			if target_map[target] != user_by_bid.user_type:
 				self.res.raise_error(ResultObject.UserError, "user_type mismatch with bnum")
 		except KeyError:
-			self.res.raise_error(ResultObject.UserError, "unknown target. target must be either student or teacher")
+			self.res.raise_error(ResultObject.UserError, "TargetMap")
 			return self.res.get()
 
 		#querying meal permission
@@ -98,12 +94,8 @@ class Meal:
 				self.res.from_User_Teacher(user_by_bid.user_name, meal, auth_result)
 				#self.res.raise_error(self.res.Debug, "NotImplemented")
 
-		except MultipleResultsFound, e:
-			self.res.raise_error(self.res.DataError, "duplicate result of MealData", e)
-		except NoResultFound, e:
-			self.res.raise_error(self.res.DataError, "Meal_log not found", e)
 		except Exception, e:
-			self.res.raise_error(self.res.DataError, "general Database error", e)
+			self.res.raise_error(self.res.DataError, "MealLog", e)
 			self.db.session.rollback()
 
 		return self.res.get()
@@ -120,13 +112,9 @@ class Meal:
 				filter_by(date=meal_date).filter_by(meal_time=meal_time).one()
 
 				self.res.from_Table_Meal(meal_result)
-
-			except MultipleResultsFound, e:
-				self.res.raise_error(self.res.DataError, "duplicate result", e)
-			except NoResultFound, e:
-				self.res.raise_error(self.res.DataError, "no result found", e)
+			
 			except Exception, e:
-				self.res.raise_error(self.res.DataError, "general Database error", e)
+				self.res.raise_error(self.res.DataError, "MealData", e)
 
 		return self.res.get()
 

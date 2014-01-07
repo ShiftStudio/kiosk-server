@@ -62,7 +62,8 @@ class ResultObject(Raiseable):
 		}
 		self._res['user'] = user_new_obj
 		self._res['event'] = event_new_obj
-		del self._res['meal']
+		if 'meal' in self._res:
+			del self._res['meal']
 		
 	def from_User_Teacher(self, user_name, conctable, auth_result):
 		user_new_obj = {
@@ -77,11 +78,13 @@ class ResultObject(Raiseable):
 		}
 		self._res['user'] = user_new_obj
 		self._res['event'] = event_new_obj
-		del self._res['meal']
+		if 'meal' in self._res:
+			del self._res['meal']
 
 	def empty_Meal(self):
 		self._res['meal'] = ResultObject.MealObject_Empty
-		del self._res['user']
+		if 'user' in self._res:
+			del self._res['user']
 		
 	def get(self):
 		return self._res
