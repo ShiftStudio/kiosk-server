@@ -119,7 +119,9 @@ class Meal:
 				filter_by(date=meal_date).filter_by(meal_time=meal_time).one()
 
 				self.res.from_Table_Meal(meal_result)
-			
+
+			except NoResultFound:
+				self.raise_error(self.res.MealNotFound, "MealData")
 			except Exception, e:
 				self.raise_error(self.res.DataError, "MealData", e)
 

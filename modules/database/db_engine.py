@@ -4,13 +4,13 @@ from sqlalchemy.exc import OperationalError, DisconnectionError
 
 from flask import Flask
 
-# cIntra_user_id = "closeapi"
-# cIntra_user_pw = "82YwNQxLvMQeGeVx"
-# cIntra_uesr_db = "closeapi"
+cIntra_user_id = "closeapi"
+cIntra_user_pw = "82YwNQxLvMQeGeVx"
+cIntra_uesr_db = "closeapi"
 
-cIntra_user_id = "root"
-cIntra_user_pw = "Qawsedrf1234"
-cIntra_uesr_db = "intra"
+# cIntra_user_id = "root"
+# cIntra_user_pw = "Qawsedrf1234"
+# cIntra_uesr_db = "intra"
 
 
 #from ccolor.py
