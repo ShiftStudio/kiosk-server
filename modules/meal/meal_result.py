@@ -29,10 +29,9 @@ class ResultObject(Raiseable):
 
 	error_map = {
 		"UserNotFound" : {"Title" : "올바르지 않은 학생증입니다.", "Message" : "학생부에 문의해 주세요."},
-		"UserMisMatch" : {"Title" : "잘못된 키오스크에 태그하셨습니다.", "Message" : "올바른 키오스크에 태그해 주세요."}
-		"MealNotFound" : {"Title" : "식사가 발견되지 않았습니다.", "Message" : "식사 정보를 등록해 주세."}
+		"UserMisMatch" : {"Title" : "잘못된 키오스크에 태그하셨습니다.", "Message" : "올바른 키오스크에 태그해 주세요."},
+		"MealNotFound" : {"Title" : "식사가 발견되지 않았습니다.", "Message" : "식사 정보를 등록해 주세."},
 		"NotMealTime" : {"Title" : "식사 시간이 아닙니다.", "Message" : ""}
-	
 	}
 	#end
 
