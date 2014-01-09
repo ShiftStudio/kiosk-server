@@ -3,8 +3,14 @@
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 class Raiseable:
+<<<<<<< HEAD
 	DataError = 30
 	UserError = 10
+=======
+	DataError = 0
+	UserError = 1
+	UserNotFound = 12
+>>>>>>> c86e14994f25ad62dc52bd8642ab0ef79b74cec3
 	Debug = 99
 
 	error_map = {
@@ -23,6 +29,8 @@ class Raiseable:
 			etype = "DataError"
 		elif etype == Raiseable.UserError:
 			etype = "UserError"
+		elif etype == Raiseable.UserNotFound:
+			etype = "UserNotFound"		
 
 		#clearing result for avoiding confilcts
 		self._res = {'event' : {}}
@@ -39,7 +47,15 @@ class Raiseable:
 				self._res['Message'] = Raiseable.error_msg_map[name(e)]
 			except KeyError:
 				self._res['event']["status"] = -399
+<<<<<<< HEAD
 				self._res['Message'] = "예상되지 않은 "+name(e)+"@"+e_from
 
 def name(exc):
 	return exc.__class__.__name__
+=======
+				self._res['Message'] = "예상되지 않은 "+str(type(e))+"@"+e_from
+		#땜빵용 코드
+		if etype == "UserNotFound":
+			self._res['Title'] = '등록되지 않은 학생증입니다'
+			self._res['Message'] = '학생부로 문의해 주세요'
+>>>>>>> c86e14994f25ad62dc52bd8642ab0ef79b74cec3

@@ -97,7 +97,7 @@ def get_meal(date, time, action=None):
 	return make_json_response()
 
 #오늘 급식 정보 가져오기, returns array
-@app.route('/meal/today/')
+@app.route('/meal/today')
 def get_today_meal(full=None):
 	clear_response()	
 
@@ -108,12 +108,12 @@ def get_today_meal(full=None):
 
 	return make_json_response()
 
-@app.route('/meal/today/full/')
+@app.route('/meal/today/full')
 def get_today_meal_full():
 	pass
 
 #현재 급식 정보 가져오기, 없을 수도 있음
-@app.route('/meal/now/')
+@app.route('/meal/now', methods=['GET', 'POST'])
 def get_now_meal():
 	clear_response()	
 
@@ -121,7 +121,7 @@ def get_now_meal():
 	return make_json_response(now_meal)
 
 #현재 급식 현황(MealState) 가져오기
-@app.route('/meal/now/state/')
+@app.route('/meal/now/state')
 def get_now_state():
 	clear_response()
 	

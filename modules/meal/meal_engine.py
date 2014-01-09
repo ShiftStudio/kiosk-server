@@ -49,7 +49,7 @@ class Meal:
 		try:
 			user_by_bid = self.db.session.query(Table_User).filter_by(b_id=sid).one()
 		except Exception, e:
-			self.res.raise_error(ResultObject.UserError, "UserbyBarcode", e)
+			self.res.raise_error(ResultObject.UserNotFound, "UserbyBarcode", e)
 			return self.res.get()
 
 		target_map = {"student" : "s", "teacher" : "t"}

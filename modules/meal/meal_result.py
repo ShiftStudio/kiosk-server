@@ -13,8 +13,13 @@ class AuthResult:
 	NONE = -199
 
 	Messages = {
+<<<<<<< HEAD
 		0 : "정상 처리되었습니다.",
 		-101 : "이미 처리된 식권입니다.",
+=======
+		0 : "식사 처리되었습니다.",
+		-101 : "이미 식사하였습니다.",
+>>>>>>> c86e14994f25ad62dc52bd8642ab0ef79b74cec3
 		-102 : "식사할 수 없습니다.",
 		-110 : "인벨리드_유저",
 		-199 : "논"	
@@ -32,7 +37,7 @@ class ResultObject(Raiseable):
 		mt = Mealtime(mealtable.meal_time)
 		mealdata_obj = {
 			"isUsableRFID" : mt.card_usable(),
-			"mealTime" : str(mt),
+			"mealName" : mealtable.title == "null" and str(mt) or mealtable.title,
 			"mealStartTime" : mt.get_start(),
 			"mealStopTime" : mt.get_stop(),
 			"mealSupplyStartTime" : mt.get_start_s(),
@@ -40,7 +45,6 @@ class ResultObject(Raiseable):
 			"mealInstanceStartTime" : mt.get_start_i(),
 			#whereis 'coupon left' db?
 			"mealInstanceCouponNum": None,
-			"mealName" : mealtable.title,
 			"foodList" : json.loads(mealtable.meal_json)
 		}
 		#####################whereis 'mealstate' db?
