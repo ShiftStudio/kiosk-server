@@ -27,11 +27,11 @@ class Raiseable:
 		#clearing result for avoiding confilcts
 		self._res = {'event' : {}}
 		self._res['Title'] = "의도적 내부 오류"
-		self._res['event'].update({"error_type" : etype, "error_from" : e_from, "error" : name(e)})
+		self._res['event'].update({"errorType" : etype, "errorFrom" : e_from, "error" : name(e)})
 		
 		if e is not None:
 			self._res['Title'] = "내부 오류"
-			self._res['event']['error_dmp'] = str(e)
+			self._res['event']['errorDump'] = str(e)
 			#assigning error_code(status)		
 			#find error code in mapper object
 			try:
