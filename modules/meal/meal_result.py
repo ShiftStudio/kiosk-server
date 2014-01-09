@@ -51,6 +51,8 @@ class ResultObject(Raiseable):
 			etype_s = "UserMisMatch"
 		elif etype == ResultObject.NotMealTime:
 			etype_s = "NotMealTime"
+		elif etype == ResultObject.MealNotFound:
+			etype_s = "MealNotFound"
 
 		if e is None:
 			#etype must be converted if errorObject is not given
@@ -58,7 +60,7 @@ class ResultObject(Raiseable):
 
 			self._res["status"] = etype
 			self._res["event"]["errorType"] = etype_s
-			self._res.update(error_map[etype_s])
+			self._res.update(ResultObject.error_map[etype_s])
 
 
 	def from_Table_Meal(self, mealtable):

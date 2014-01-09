@@ -2,6 +2,7 @@
 
 from datetime import datetime, time, date
 from ..database.db_engine import *
+from sqlalchemy.orm.exc import NoResultFound
 
 from meal_db_table import *
 from meal_result import ResultObject, AuthResult
@@ -144,10 +145,13 @@ class Meal:
 		mealtype = Mealtime.get_current()
 		if mealtype is None:
 			return None
-		else:				
-			meal_result = self.db.session.query(Table_Meal).\
-				filter_by(date=Today.today()).filter_by(meal_time=mealtype).one()
-			return meal_result.id
+		else:
+			try:
+				meal_result = self.db.session.query(Table_Meal).\
+					filter_by(date=Today.today()).filter_by(meal_time=mealtype).one()
+				return meal_result.id
+			except NoResultFound:
+				return None
 
 
 #NotImplemented below

@@ -25,11 +25,10 @@ class Raiseable(object):
 
 		#clearing result for avoiding confilcts
 		self._res = {'event' : {}}
-		self._res['event'].update({"errorType" : etype_s, "errorFrom" : e_from, "error" : name(e)})
-		
 		if e is not None:
 			self._res['Title'] = "내부 오류"
-			self._res['event']['errorDump'] = str(e)
+			self._res['event'].update({"errorType" : etype_s, "errorFrom" : e_from, "error" : name(e), "errorDump" : str(e)})
+		
 			#assigning error_code(status)		
 			#find error code in mapper object
 			try:
@@ -37,7 +36,8 @@ class Raiseable(object):
 			except KeyError:
 				self._res["status"] = -399
 				self._res['Message'] = "예상되지 않은 "+name(e)+"@"+e_from
-
+		else:
+			self._res['event']['errorFrom'] = e_from
 
 def name(exc):
 	return exc.__class__.__name__
