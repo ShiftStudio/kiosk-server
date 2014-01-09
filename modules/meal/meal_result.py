@@ -13,24 +13,49 @@ class AuthResult:
 	NONE = -199
 
 	Messages = {
-<<<<<<< HEAD
-		0 : "정상 처리되었습니다.",
-		-101 : "이미 처리된 식권입니다.",
-=======
 		0 : "식사 처리되었습니다.",
 		-101 : "이미 식사하였습니다.",
->>>>>>> c86e14994f25ad62dc52bd8642ab0ef79b74cec3
 		-102 : "식사할 수 없습니다.",
 		-110 : "인벨리드_유저",
 		-199 : "논"	
 	}
 
 class ResultObject(Raiseable):
-	MealObject_Empty = {"mealData" : "", "mealState" : ""}
-	#user, event, meal obj
+	#custom error for dimigo_meal
+	UserNotFound = -102
+	UserMisMatch = -103
+	NotMealTime = -110
 
+	error_map = {
+		"UserNotFound" : {"Title" : "올바르지 않은 학생증입니다.", "Message" : "학생부에 문의해 주세요."},
+		"UserMisMatch" : {"Title" : "잘못된 키오스크에 태그하셨습니다.", "Message" : "올바른 키오스크에 태그해 주세요."}
+	}
+	#end
+
+	MealObject_Empty = {"mealData" : "", "mealState" : ""}
+
+	#user, event, meal obj
 	def __init__(self):
 		self._res = {"user" : None, "event" : {"status" : 0}, "meal" : None}
+
+	#overriding
+	def raise_error(self, etype, e_from, e=None):
+		super(ResultObject, self).raise_error(etype, e_from, e)
+
+		if etype == ResultObject.UserNotFound:
+			etype_s = "UserNotFound"
+		elif etype == ResultObject.UserMisMatch:
+			etype_s = "UserMisMatch"
+		elif etype == ResultObject.NotMealTime:
+			etype_s = "NotMealTime"
+
+		if e is None:
+			#etype must be converted if errorObject is not given
+			assert(etype_s is not None), TypeError
+
+			self._res["status"] = etype
+			self._res["event"]["errorType"] = etype_s
+			self._res.update(error_map[etype_s])
 
 
 	def from_Table_Meal(self, mealtable):
@@ -40,8 +65,6 @@ class ResultObject(Raiseable):
 			"mealName" : mealtable.title == "null" and str(mt) or mealtable.title,
 			"mealStartTime" : mt.get_start(),
 			"mealStopTime" : mt.get_stop(),
-			"mealSupplyStartTime" : mt.get_start_s(),
-			"mealSupplyStopTime" : mt.get_stop_s(),
 			"mealInstanceStartTime" : mt.get_start_i(),
 			#whereis 'coupon left' db?
 			"mealInstanceCouponNum": None,

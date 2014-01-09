@@ -40,25 +40,27 @@ class Meal:
 		try:
 			fid = self.get_now_id()
 			if fid is None:
-				self.res.raise_error(ResultObject.DataError, "not meal time now")
+				self.raise_error(ResultObject.NotMealTime, "Meal_Now")
 		except Exception, e:
-			self.res.raise_error(ResultObject.DataError, "Meal_Now", e)
+			self.raise_error(ResultObject.DataError, "Meal_Now", e)
 			return self.res.get()
 
 		#querying user objects from barcode
 		try:
 			user_by_bid = self.db.session.query(Table_User).filter_by(b_id=sid).one()
+		except NoResultFound:
+			self.raise_error(ResultObject.UserNotFound, "UserbyBarcode")
 		except Exception, e:
-			self.res.raise_error(ResultObject.UserNotFound, "UserbyBarcode", e)
+			self.raise_error(ResultObject.UserError, "UserbyBarcode", e)
 			return self.res.get()
 
 		target_map = {"student" : "s", "teacher" : "t"}
 		try:
 			if target_map[target] != user_by_bid.user_type:
-				self.res.raise_error(ResultObject.UserError, "user_type mismatch with bnum")
+				self.raise_error(ResultObject.UserMismatch, "TargetMap")
 				return self.res.get()
 		except KeyError, e:
-			self.res.raise_error(ResultObject.UserError, "TargetMap", e)
+			self.raise_error(ResultObject.UserError, "TargetMap", e)
 			return self.res.get()
 
 		#querying meal permission
@@ -82,7 +84,7 @@ class Meal:
 
 			elif user_by_bid.user_type == "t":
 				if t_cnt < 1 or t_cnt > 10:
-					self.res.raise_error(ResultObject.DataError, "t_cnt out of range : must between 1 and 10")
+					self.raise_error(ResultObject.MealOutofRange, "t_cnt out of range : must between 1 and 10")
 					return self.res.get()
 
 				meal = self.db.session.query(Table_Meal_Teacher).\
@@ -97,10 +99,10 @@ class Meal:
 					auth_result = AuthResult.BANNED
 
 				self.res.from_User_Teacher(user_by_bid.user_name, meal, auth_result)
-				#self.res.raise_error(self.res.Debug, "NotImplemented")
+				#self.raise_error(self.res.Debug, "NotImplemented")
 
 		except Exception, e:
-			self.res.raise_error(self.res.DataError, "MealLog", e)
+			self.raise_error(self.res.DataError, "MealLog", e)
 			self.db.session.rollback()
 
 		return self.res.get()
@@ -119,7 +121,7 @@ class Meal:
 				self.res.from_Table_Meal(meal_result)
 			
 			except Exception, e:
-				self.res.raise_error(self.res.DataError, "MealData", e)
+				self.raise_error(self.res.DataError, "MealData", e)
 
 		return self.res.get()
 
@@ -154,7 +156,7 @@ class Meal:
 			self.db.session.add(meal_row)
 			self.db.session.commit()
 		except Exception, e:
-			self.res.raise_error(self.res.DataError, e)
+			self.raise_error(self.res.DataError, e)
 			self.db.session.rollback()
 
 		return self.res.get()
@@ -171,6 +173,14 @@ class Meal:
 			meal_from = meal_tables.filter_by(user_id=u_from)
 		
 		except MultipleResultsFound, e:
-			self.res.raise_error(self.res.DataError, "duplicate result", e)
+			self.raise_error(self.res.DataError, "duplicate result", e)
 		except NoResultFound, e:
-			self.res.raise_error(self.res.DataError, "no result found")
+			self.raise_error(self.res.DataError, "no result found")
+
+
+	def raise_error(self, etype, e_from, e=None):
+		#we really need this
+		self.db.session.rollback()
+		self.db.session.remove()
+
+		self.res.raise_error(etype, e_from, e)

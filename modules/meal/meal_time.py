@@ -51,12 +51,6 @@ class Mealtime:
 			return str(Mealtime.s_end)
 
 
-	def get_start_s(self):
-		return self.get_start()
-
-	def get_stop_s(self):
-		return self.get_stop()
-
 	def get_start_i(self):
 		return self.get_start()
 
