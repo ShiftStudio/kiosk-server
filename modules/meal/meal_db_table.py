@@ -6,28 +6,33 @@ from sqlalchemy.orm import mapper, column_property
 #print sqlalchemy.version
 Base = declarative_base()
 
-class Table_Meal_log(Base):
-	__tablename__ = "intra_meal_log"
+class Table_Meal_log_S(Base):
+	__tablename__ = "meal_coupon_inst"
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
-	user_id = Column(Integer, ForeignKey("intra_user.id"))
-	food_id = Column(Integer, ForeignKey("intra_meal_table.id"))
-	count = Column(Integer)
-	is_allowed = Column(Boolean)
+	for_meal = Column(Integer, ForeignKey("meal_menu.id"))
+	owned_by = Column(Integer)
+	expire_date = Column(Date)
+	is_used = Column(Integer(1))
+	is_checked_admin = Column(Integer(1))
 	
-	# def __init__(self, uid, fid, count, is_allowed):
-	# 	self.user_id = uid
-	# 	self.food_id = fid
-	# 	self.count = count
-	# 	self.is_allowed = is_allowed
 
-	#same as csharp's toString or objC's description
-	def __repr__(self):
-		return "<Meal_log(id, food_id, count, allowed) : (%s, %s, %s, %s)>" % (
-			self.id, self.food_id, self.count, self.is_allowed)
+class Table_Meal_log_T(Base):
+	__tablename__ = "meal_teacher_log"
+
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	user_id = Column(Integer)
+	for_meal = Column(Integer, ForeignKey("meal_menu.id"))
+	count = Column(Integer)
+	modified_at = Column(Date)
+
+	#convert kwdictionary to object
+	def __init__(self, **entries): 
+		self.__dict__.update(entries)
+	
 
 class Table_Meal(Base):
-	__tablename__ = "intra_meal_table"
+	__tablename__ = "meal_menu"
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	title = Column(String)
@@ -36,13 +41,32 @@ class Table_Meal(Base):
 	quantity_json = Column(String)
 	nation_json = Column(String)
 	date = Column(Date)
+	inst_coupon_left = Column(Integer(3))
 
 	#convert kwdictionary to object
-	def __init__(self, **kwargs):
-		for k, v in kwargs.items():
-			setattr(self, k, v)
+	def __init__(self, **entries): 
+		self.__dict__.update(entries)
+
+class Table_Blacklist(Base):
+	__tablename__ = "meal_blacklist"
+
+	#sqlalchemy ORM doesn't support table without PK
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	user_id = Column(Integer)
+	is_banned = Column(Integer)
 
 
+#Joined Table : Declarative
+class Table_Meal_Student(Base):
+	__table__ = sql.outerjoin(Table_Meal_log_S.__table__, Table_Blacklist.__table__,
+                           Table_Meal_log_S.__table__.c.owned_by == Table_Blacklist.__table__.c.user_id)
+
+	owned_by = column_property(Table_Meal_log_S.__table__.c.owned_by, Table_Blacklist.__table__.c.user_id)
+	bl_id = Table_Blacklist.__table__.c.id
+	m_id = Table_Meal_log_S.__table__.c.id
+
+
+"""
 class Table_User(Base):
 	__tablename__ = "intra_user"
 
@@ -68,23 +92,7 @@ class Table_User_T(Base):
 	user_id = Column(Integer, ForeignKey("intra_user.id"))
 	department = Column(String)
 	position = Column(String)
-
-#Joined Table : Declarative
-class Table_Meal_Student(Base):
-	__table__ = sql.join(Table_Meal_log.__table__, Table_User_S.__table__,
-                           Table_Meal_log.__table__.c.user_id == Table_User_S.__table__.c.user_id)
-
-	user_id = column_property(Table_Meal_log.__table__.c.user_id, Table_User_S.__table__.c.user_id)
-	s_id = Table_User_S.__table__.c.id
-	m_id = Table_Meal_log.__table__.c.id
-
-class Table_Meal_Teacher(Base):
-	__table__ = sql.join(Table_Meal_log.__table__, Table_User_T.__table__,
-                           Table_Meal_log.__table__.c.user_id == Table_User_T.__table__.c.user_id)
-
-	user_id = column_property(Table_Meal_log.__table__.c.user_id, Table_User_T.__table__.c.user_id)
-	t_id = Table_User_T.__table__.c.id
-	m_id = Table_Meal_log.__table__.c.id
+"""
 
 
 

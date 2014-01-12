@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime, time, date
+
 from ..database.db_engine import *
+from ..intra_user import *
+
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import func
 
 from meal_db_table import *
 from meal_result import ResultObject, AuthResult
@@ -42,18 +46,21 @@ class Meal:
 			fid = self.get_now_id()
 			if fid is None:
 				self.raise_error(ResultObject.NotMealTime, "Meal_Now")
+				return self.res.get()
 		except Exception, e:
 			self.raise_error(ResultObject.DataError, "Meal_Now", e)
 			return self.res.get()
 
 		#querying user objects from barcode
 		try:
-			user_by_bid = self.db.session.query(Table_User).filter_by(b_id=sid).one()
+			user_by_bid = IntraUser.get_from_bid(sid)
 		except NoResultFound:
 			self.raise_error(ResultObject.UserNotFound, "UserbyBarcode")
+			return self.res.get()
 		except Exception, e:
 			self.raise_error(ResultObject.UserError, "UserbyBarcode", e)
 			return self.res.get()
+
 
 		target_map = {"student" : "s", "teacher" : "t"}
 		try:
@@ -68,38 +75,52 @@ class Meal:
 		auth_result = AuthResult.NONE
 		try:
 			if user_by_bid.user_type == "s":
-				meal = self.db.session.query(Table_Meal_Student).\
-				filter_by(food_id=fid).filter_by(user_id=user_by_bid.id).one()
+				try:
+					meal = self.db.query(Table_Meal_Student).\
+					filter_by(for_meal=fid).filter_by(owned_by=user_by_bid.id).one()
+					#student can only eat meal once
+					if meal.is_banned == 1:
+						auth_result = AuthResult.BANNED
+					else:
+						if meal.is_checked_admin == 1 and meal.is_used == 0:
+							meal.is_used = 1
+							self.db.session.commit()
+							auth_result = AuthResult.SUCCESS
+						elif meal.is_checked_admin == 1 and meal.is_used == 1:
+							auth_result = AuthResult.ALREADY_EATEN
+						else:
+							auth_result = AuthResult.UNCONFIRMED
+				except NoResultFound:
+					#식권 현장발급 루틴은 여기서 구현하면 안됨요, 다른 URL 만들어서 처
+					auth_result = AuthResult.NOCOUPON
+					
 
-				#student can only eat meal once
-				if meal.is_allowed == True and meal.count < 1:
-					meal.count += 1
-					self.db.session.commit()
-					auth_result = AuthResult.SUCCESS
-				elif meal.is_allowed == True and meal.count >= 1:
-					auth_result = AuthResult.ALREADY_EATEN
-				else:
-					auth_result = AuthResult.BANNED
-
-				self.res.from_User_Student(user_by_bid.user_name, meal, auth_result)
+				self.res.from_User_Student(user_by_bid, auth_result)
 
 			elif user_by_bid.user_type == "t":
 				if t_cnt < 1 or t_cnt > 10:
 					self.raise_error(ResultObject.MealOutofRange, "t_cnt out of range : must between 1 and 10")
 					return self.res.get()
 
-				meal = self.db.session.query(Table_Meal_Teacher).\
-				filter_by(food_id=fid).filter_by(user_id=user_by_bid.id).one()
-
-				#teacher can eat meal multiple times
-				if meal.is_allowed == True:
-					meal.count += t_cnt
-					self.db.session.commit()
+				#teaher blacklist check
+				try:
+					user = self.db.query(Table_Blacklist).\
+					filter_by(user_id=user_by_bid.id).one()
+					if user.is_banned == 1:
+						auth_result = AuthResult.BANNED
+					else:
+						auth_result = AuthResult.SUCCESS
+				except NoResultFound:
+					#pass when no data found
 					auth_result = AuthResult.SUCCESS
-				else:
-					auth_result = AuthResult.BANNED
 
-				self.res.from_User_Teacher(user_by_bid.user_name, meal, auth_result)
+
+				if auth_result == AuthResult.SUCCESS:
+					meal = Table_Meal_log_T(user_id=user_by_bid.id, for_meal=fid, count=t_cnt, modified_at=Today.today())
+					self.db.session.add(meal)
+					self.db.session.commit()
+
+				self.res.from_User_Teacher(user_by_bid, auth_result)
 				#self.raise_error(self.res.Debug, "NotImplemented")
 
 		except Exception, e:
@@ -116,10 +137,10 @@ class Meal:
 			pass
 		else:
 			try:
-				meal_result = self.db.session.query(Table_Meal).\
+				meal_result = self.db.query(Table_Meal).\
 				filter_by(date=meal_date).filter_by(meal_time=meal_time).one()
 
-				self.res.from_Table_Meal(meal_result)
+				self.res.from_Table_Meal(meal_result, self.get_meal_state(meal_result.id))
 
 			except NoResultFound:
 				self.raise_error(self.res.MealNotFound, "MealData")
@@ -147,13 +168,21 @@ class Meal:
 			return None
 		else:
 			try:
-				meal_result = self.db.session.query(Table_Meal).\
+				meal_result = self.db.query(Table_Meal).\
 					filter_by(date=Today.today()).filter_by(meal_time=mealtype).one()
 				return meal_result.id
 			except NoResultFound:
 				return None
 
+	#injection warning
+	def get_meal_state(self, meal_id):
+		raw_query = self.db.raw_query("""SELECT 
+    SUM(is_used = 1), SUM(id) 
+FROM meal_coupon_inst
+WHERE for_meal = {0}""".format(meal_id)).first()
 
+		return raw_query
+		
 #NotImplemented below
 
 	def add(self, data):
@@ -171,18 +200,42 @@ class Meal:
 	#두 번 먹는게 가능함?
 	def gift(self, meal_date, meal_time, u_from, u_to):	
 		try:
-			meal_result = self.db.session.query(Table_Meal).filter_by(date=meal_date).filter_by(meal_time=meal_time)
-			fid = meal_result.one().id
+			u_from = IntraUser.get_from_bid(u_from)
+			u_to = IntraUser.get_from_bid(u_to)
+		except NoResultFound:
+			self.raise_error(ResultObject.UserNotFound, "UserbyBarcode")
+			return self.res.get()
+		except Exception, e:
+			self.raise_error(ResultObject.UserError, "UserbyBarcode", e)
+			return self.res.get()
 
-			meal_tables = self.db.session.query(Table_Meal_log).filter_by(food_id=fid)
-			#'from' and 'to' must be uid
-			meal_from = meal_tables.filter_by(user_id=u_from)
-		
-		except MultipleResultsFound, e:
-			self.raise_error(self.res.DataError, "duplicate result", e)
-		except NoResultFound, e:
-			self.raise_error(self.res.DataError, "no result found")
+		#verify mealtime or not
+		try:
+			fid = self.get_now_id()
+			if fid is None:
+				self.raise_error(ResultObject.NotMealTime, "Meal_Now")
+				return self.res.get()
+		except Exception, e:
+			self.raise_error(ResultObject.DataError, "Meal_Now", e)
+			return self.res.get()
 
+		try:
+			meal = self.db.query(Table_Meal_Student).\
+			filter_by(for_meal=fid).filter_by(owned_by=u_from.id).one()
+			#student can only eat meal once
+
+			if meal.is_checked_admin == 1 and meal.is_used == 0:
+				meal.owned_by = u_to.id
+				self.db.session.commit()
+				auth_result = AuthResult.SUCCESS
+			elif meal.is_checked_admin == 1 and meal.is_used == 1:
+				auth_result = AuthResult.ALREADY_EATEN
+			else:
+				auth_result = AuthResult.UNCONFIRMED
+		except NoResultFound:
+			auth_result = AuthResult.NOCOUPON
+			
+		###result should be given
 
 	def raise_error(self, etype, e_from, e=None):
 		#we really need this

@@ -2,3 +2,9 @@
 *.pyc
 
 .DS_Store
+
+modules/meal/meal_db_table_r.py
+
+modules/meal/meal_engine_r.py
+
+modules/meal/meal_result_r.py
