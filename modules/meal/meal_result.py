@@ -26,20 +26,24 @@ class AuthResult:
 
 class ResultObject(Raiseable):
 	#custom error for dimigo_meal
-	UserNotFound = -202
-	UserMismatch = -203
+	UserNotFound = -201.1
+	StudentNotFound = -201.2
+	TeacherNotFound = -201.3
+	UserMismatch = -202
 	NotMealTime = -210
-	MealNotFound = -212
+	MealNotFound = -211
 
 	error_map = {
-		"UserNotFound" : {"Title" : "올바르지 않은 학생증입니다.", "Message" : "학생부에 문의해 주세요."},
-		"UserMismatch" : {"Title" : "잘못된 키오스크에 태그하셨습니다.", "Message" : "올바른 키오스크에 태그해 주세요."},
-		"MealNotFound" : {"Title" : "식사가 발견되지 않았습니다.", "Message" : "식사 정보를 등록해 주세."},
-		"NotMealTime" : {"Title" : "식사 시간이 아닙니다.", "Message" : ""}
+		-201.1 : {"event" : { "errorType" : "UserNotFound" }, "Title" : "올바르지 않은 학생증입니다.", "Message" : "학생부에 문의해 주세요."},
+		-201.2 : {"event" : { "errorType" : "StudentNotFound" }, "Title" : "올바르지 않은 학생증입니다.", "Message" : "학생부에 문의해 주세요."},
+		-201.3 : {"event" : { "errorType" : "TeacherNotFound" }, "Title" : "올바르지 않은 교사증입니다.", "Message" : "교무지원부에 문의해 주세요."},
+		-202 : {"event" : { "errorType" : "UserMismatch" }, "Title" : "잘못된 키오스크에 태그하셨습니다.", "Message" : "올바른 키오스크에 태그해 주세요."},
+		-210 : {"event" : { "errorType" : "MealNotFound" }, "Title" : "식사가 발견되지 않았습니다.", "Message" : "식사 정보를 등록해 주세."},
+		-211 : {"event" : { "errorType" : "NotMealTime" }, "Title" : "식사 시간이 아닙니다.", "Message" : ""}
 	}
 	#end
 
-	MealObject_Empty = {"mealData" : "", "mealState" : ""}
+	MealObject_Empty = { "mealData" : { "isServing" : False }, "mealState" : {}}
 
 	#user, event, meal obj
 	def __init__(self):
@@ -49,28 +53,17 @@ class ResultObject(Raiseable):
 	def raise_error(self, etype, e_from, e=None):
 		super(ResultObject, self).raise_error(etype, e_from, e)
 
-		if etype == ResultObject.UserNotFound:
-			etype_s = "UserNotFound"
-		elif etype == ResultObject.UserMismatch:
-			etype_s = "UserMismatch"
-		elif etype == ResultObject.NotMealTime:
-			etype_s = "NotMealTime"
-		elif etype == ResultObject.MealNotFound:
-			etype_s = "MealNotFound"
-
 		if e is None:
-			#etype must be converted if errorObject is not given
-			assert(etype_s is not None), TypeError
 
-			self._res["status"] = etype
-			self._res["event"]["errorType"] = etype_s
-			self._res.update(ResultObject.error_map[etype_s])
+			self._res["status"] = int(etype)
+			self._res.update(ResultObject.error_map[etype])
 
 
 	def from_Table_Meal(self, mealtable, mealstate):
 		mt = Mealtime(mealtable.meal_time)
 		mealdata_obj = {
 			"mealId" : mealtable.id,
+			"isServing" : mt.is_serving(),
 			"isUsableRFID" : mt.card_usable(),
 			"mealName" : mealtable.title == "null" and str(mt) or mealtable.title,
 			"mealStartTime" : mt.get_start(),

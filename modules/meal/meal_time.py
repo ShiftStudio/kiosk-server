@@ -17,7 +17,6 @@ class Mealtime:
 	s_start	 = strtot("20:50:00")
 	s_end	 = strtot("21:30:00")
 
-	mt_map = {"B" : "아침", "L" : "점심", "D" : "저녁", "S" : "간식"}
 
 	def __init__(self, mt):
 		self.mt = mt
@@ -25,7 +24,12 @@ class Mealtime:
 	def __repr__(self):
 		return Mealtime.mt_map[self.mt]
 
-	#잔류급식도 있잖아....
+	def is_serving(self):
+		if Mealtime.get_current() is not None or self.mt == "M":
+			return True
+		else:
+			return False		
+
 	def card_usable(self):
 		return True
 

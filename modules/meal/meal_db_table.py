@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, Boolean, String, Date, Time, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import sql
 from sqlalchemy.orm import mapper, column_property
@@ -12,7 +12,6 @@ class Table_Meal_log_S(Base):
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	for_meal = Column(Integer, ForeignKey("meal_menu.id"))
 	owned_by = Column(Integer)
-	expire_date = Column(Date)
 	is_used = Column(Integer(1))
 	is_checked_admin = Column(Integer(1))
 	
@@ -36,7 +35,7 @@ class Table_Meal(Base):
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	title = Column(String)
-	meal_time = Column(String(2))
+	meal_time = Column(String(1), ForeignKey("meal_time.time_code"))
 	meal_json = Column(String)
 	quantity_json = Column(String)
 	nation_json = Column(String)
@@ -54,6 +53,16 @@ class Table_Blacklist(Base):
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	user_id = Column(Integer)
 	is_banned = Column(Integer)
+
+class Table_Mealtime(Base):
+	__tablename__ = "meal_time"
+
+	#sqlalchemy ORM doesn't support table without PK
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	time_code = Column(String(1))
+	time_name = Column(String)
+	start_time = Column(Time)
+	end_time = Column(Time)
 
 
 #Joined Table : Declarative

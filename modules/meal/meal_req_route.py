@@ -3,6 +3,7 @@ assert(__name__ != "__main__"), "No direct calling allowed"
 
 from flask import Flask, request, abort, redirect, json
 
+from modules.database.db_engine import get_db_instance
 from modules.security import Security
 from modules.meal.meal_engine import Meal, Today
 
@@ -158,9 +159,12 @@ def clear_response():
 	global ext_status
 	ext_status = 0
 	s_res.clear()
+
+
 	
 def make_json_response(new_objects=None):
-
+	get_db_instance().session.remove()
+	
 	if new_objects is None:
 		s_res.update({"ext_status" : ext_status})
 		return json.jsonify(s_res)

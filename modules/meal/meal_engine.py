@@ -36,7 +36,7 @@ class ClassHelper:
 
 class Meal:
 	def __init__(self):
-		self.db = Intra_Database()
+		self.db = get_db_instance()
 		self.res = ResultObject()
 
 	#131227 야근
@@ -55,7 +55,12 @@ class Meal:
 		try:
 			user_by_bid = IntraUser.get_from_bid(sid)
 		except NoResultFound:
-			self.raise_error(ResultObject.UserNotFound, "UserbyBarcode")
+			if target == "student":
+				self.raise_error(ResultObject.StudentNotFound, "UserbyBarcode")
+			elif target == "teacher":
+				self.raise_error(ResultObject.TeacherNotFound, "UserbyBarcode")
+			else:
+				self.raise_error(ResultObject.UserNotFound, "UserbyBarcode")					
 			return self.res.get()
 		except Exception, e:
 			self.raise_error(ResultObject.UserError, "UserbyBarcode", e)
@@ -76,6 +81,7 @@ class Meal:
 		try:
 			if user_by_bid.user_type == "s":
 				try:
+					meal = None
 					meal = self.db.query(Table_Meal_Student).\
 					filter_by(for_meal=fid).filter_by(owned_by=user_by_bid.id).one()
 					#student can only eat meal once
@@ -146,7 +152,7 @@ class Meal:
 				self.raise_error(self.res.MealNotFound, "MealData")
 			except Exception, e:
 				self.raise_error(self.res.DataError, "MealData", e)
-
+		
 		return self.res.get()
 
 
@@ -240,6 +246,7 @@ WHERE for_meal = {0}""".format(meal_id)).first()
 	def raise_error(self, etype, e_from, e=None):
 		#we really need this
 		self.db.session.rollback()
+		self.db.session.close()
 		self.db.session.remove()
 
 		self.res.raise_error(etype, e_from, e)

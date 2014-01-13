@@ -15,24 +15,24 @@ class IntraUser:
 
 		#string to int conversion to sanitize non-number value
 		#bid = int(bid)
-		req = urllib2.Request(cls.cCard_query_url + bid)
-
-		req.add_header('X-DIMIGO-SHIFT-SSO-AUTH', 'AUTHORIZED')
-		r = urllib2.urlopen(req).read()
-
-		resp_data = json.loads(r)
 		try:
+			req = urllib2.Request(cls.cCard_query_url + bid)
+			req.add_header('X-DIMIGO-SHIFT-SSO-AUTH', 'AUTHORIZED')
+			r = urllib2.urlopen(req).read()
+
+			resp_data = json.loads(r)
+			
 			if resp_data['status'] != "success":
 				if "wrong" in resp_data['message']:
 					raise NoResultFound
 				else:
-					raise Exception(resp_data['message'])
+					raise Exception("asd")#resp_data['message'])
 			else:
 				return IntraUser(**resp_data)
 		#do not return status value when success, weird
 		except KeyError:
 			return IntraUser(**resp_data)
-		except HTTPError, e:
+		except urllib2.HTTPError, e:
 			if e.code == 400:
 				raise NoResultFound
 
