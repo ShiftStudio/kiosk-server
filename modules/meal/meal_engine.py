@@ -161,11 +161,13 @@ class Meal:
 		mealtype = Mealtime.get_current()
 		if mealtype is None:
 			self.res.empty_Meal()
+			return self.res.get()
 		else:
 			if get_full is None:
 				return self.get_by_dt(Today.today(), mealtype, False)
 			else:
 				return self.get_by_dt(Today.today(), mealtype, True)
+
 
 	#getting current meal info
 	def get_now_id(self):

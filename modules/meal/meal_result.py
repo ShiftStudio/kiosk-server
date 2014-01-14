@@ -19,7 +19,7 @@ class AuthResult:
 		-101 : "이미 식사하였습니다.",
 		-102 : "식사할 수 없습니다.",
 		-103 : "확인되지 않은 식권입니다.",
-		-104 : "식권이 존재하지 않습니다. 현장발급",
+		-104 : "식권이 존재하지 않습니다.",
 		-110 : "인벨리드_유저",
 		-199 : "논"	
 	}
@@ -30,8 +30,8 @@ class ResultObject(Raiseable):
 	StudentNotFound = -201.2
 	TeacherNotFound = -201.3
 	UserMismatch = -202
-	NotMealTime = -210
-	MealNotFound = -211
+	MealNotFound = -210
+	NotMealTime = -211
 
 	error_map = {
 		-201.1 : {"event" : { "errorType" : "UserNotFound" }, "Title" : "올바르지 않은 학생증입니다.", "Message" : "학생부에 문의해 주세요."},
@@ -64,7 +64,7 @@ class ResultObject(Raiseable):
 		mealdata_obj = {
 			"mealId" : mealtable.id,
 			"isServing" : mt.is_serving(),
-			"isUsableRFID" : mt.card_usable(),
+			"isUsableRFID" : mealtable.card_usable,
 			"mealName" : mealtable.title == "null" and str(mt) or mealtable.title,
 			"mealStartTime" : mt.get_start(),
 			"mealStopTime" : mt.get_stop(),
@@ -118,6 +118,8 @@ class ResultObject(Raiseable):
 			del self._res['meal']
 
 	def empty_Meal(self):
+		self._res['status'] = ResultObject.NotMealTime
+		self._res.update(ResultObject.error_map[ResultObject.NotMealTime])
 		self._res['meal'] = ResultObject.MealObject_Empty
 		if 'user' in self._res:
 			del self._res['user']

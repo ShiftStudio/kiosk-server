@@ -1,76 +1,47 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
+from datetime import datetime, time
+
+from ..database.db_engine import get_db_instance
+from meal_db_table import Table_Mealtime
+
 
 class Mealtime:
 
-	#based on DIMIGO's meal timetable
-	#will store on MEMCACHE later
-	strtot = lambda time : datetime.strptime(time, "%H:%M:%S").time()
+	def format_time(self, dt):
 
-	b_start	 = strtot("7:00:00")
-	b_end	 = strtot("9:00:00")
-	l_start	 = strtot("12:00:00")
-	l_end	 = strtot("13:00:00")
-	d_start	 = strtot("18:00:00")
-	d_end	 = strtot("19:30:00")
-	s_start	 = strtot("20:50:00")
-	s_end	 = strtot("21:30:00")
-
+		return time.strftime(dt, "%H:%M:%S")
 
 	def __init__(self, mt):
-		self.mt = mt
 
-	def __repr__(self):
-		return Mealtime.mt_map[self.mt]
+		mt = str(mt)
+		#relation으로 묶여있으니 Exception 생길일은 없을듯
+		self.mt_map = get_db_instance().query(Table_Mealtime).\
+		filter_by(time_code=mt).one()
 
 	def is_serving(self):
-		if Mealtime.get_current() is not None or self.mt == "M":
-			return True
-		else:
-			return False		
-
-	def card_usable(self):
 		return True
 
 		#use memcached later
 	def get_start(self):
-		if self.mt == "B":
-			return str(Mealtime.b_start)
-		elif self.mt == "L":
-			return str(Mealtime.l_start)
-		elif self.mt == "D":
-			return str(Mealtime.d_start)
-		elif self.mt == "S":
-			return str(Mealtime.s_start)
+		return self.format_time(self.mt_map.start_time)
 
 	def get_stop(self):
-		if self.mt == "B":
-			return str(Mealtime.b_end)
-		elif self.mt == "L":
-			return str(Mealtime.l_end)
-		elif self.mt == "D":
-			return str(Mealtime.d_end)
-		elif self.mt == "S":
-			return str(Mealtime.s_end)
-
+		return self.format_time(self.mt_map.end_time)
 
 	def get_start_i(self):
 		return self.get_start()
 
+
 	@classmethod
 	def get_current(cls):
 		now = datetime.today().time()
-##debugCode
-		return "B"
+		mt_map = get_db_instance().query(Table_Mealtime)
 
-		if cls.b_start <= now <= cls.b_end:
-			return "B"
-		elif cls.l_start <= now <= cls.l_end:
-			return "L"
-		elif cls.d_start <= now <= cls.d_end:
-			return "D"
-		elif cls.s_start <= now <= cls.s_end:
-			return "S"
-		else:
-			return None
+#		pdb.set_trace()
+
+		for mt in mt_map:
+			if mt.start_time < now < mt.end_time:
+				return mt.time_code
+
+		return None

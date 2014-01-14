@@ -41,6 +41,7 @@ class Table_Meal(Base):
 	nation_json = Column(String)
 	date = Column(Date)
 	inst_coupon_left = Column(Integer(3))
+	card_usable = Column(Integer(1))
 
 	#convert kwdictionary to object
 	def __init__(self, **entries): 
