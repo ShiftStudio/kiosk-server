@@ -138,16 +138,14 @@ class Meal:
 	#getting meal info by date and mealtime
 	def get_by_dt(self, meal_date, meal_time=None, get_full=False):
 
-		if meal_time is None:
-			#returns all object(BLDS)
-			pass
-		else:
+		# if 
+		# 	#returns all object(BLDS)
+		# 	pass
+		if meal_time is not None:
 			try:
 				meal_result = self.db.query(Table_Meal).\
 				filter_by(date=meal_date).filter_by(meal_time=meal_time).one()
-
 				self.res.from_Table_Meal(meal_result, self.get_meal_state(meal_result.id))
-
 			except NoResultFound:
 				self.raise_error(self.res.MealNotFound, "MealData")
 			except Exception, e:
@@ -159,37 +157,57 @@ class Meal:
 	#getting current meal info
 	def get_now(self, get_full=None):
 		mealtype = Mealtime.get_current()
+		# import pdb; pdb.set_trace()
 		if mealtype is None:
 			self.res.empty_Meal()
 			return self.res.get()
-		else:
+		elif mealtype['current'] == True:
 			if get_full is None:
-				return self.get_by_dt(Today.today(), mealtype, False)
+				return self.get_by_dt(Today.today(), mealtype['time_code'], False)
 			else:
-				return self.get_by_dt(Today.today(), mealtype, True)
+				return self.get_by_dt(Today.today(), mealtype['time_code'], True)
+		elif mealtype['current'] == False:
+			if get_full is None:
+				return self.get_by_dt(Today.today(), mealtype['time_code'], False)
+			else:
+				return self.get_by_dt(Today.today(), mealtype['time_code'], True)
 
+		self.res.empty_Meal()
+		return self.res.get()
 
 	#getting current meal info
 	def get_now_id(self):
 		mealtype = Mealtime.get_current()
-		if mealtype is None:
+		if mealtype is None: # it will never occur
 			return None
-		else:
+		elif mealtype['current'] == True:
 			try:
-				meal_result = self.db.query(Table_Meal).\
-					filter_by(date=Today.today()).filter_by(meal_time=mealtype).one()
+				meal_result = self.db.query(
+					Table_Meal).filter_by(
+					date=Today.today()).filter_by(meal_time=mealtype['time_code']).one()
 				return meal_result.id
 			except NoResultFound:
 				return None
+		elif mealtype['current'] == False:
+			try:
+				meal_result = self.db.query(
+					Table_Meal).filter_by(
+					date=Today.today()).filter_by(meal_time=mealtype['time_code']).one()
+				return meal_result.id
+			except NoResultFound:
+				return None
+		else:
+			return None
 
 	#injection warning
 	def get_meal_state(self, meal_id):
-		raw_query = self.db.raw_query("""SELECT 
-    SUM(is_used = 1), SUM(id) 
+		obj = self.db.raw_query("""SELECT 
+    COUNT(IF( is_used =1, is_used, NULL )), COUNT(id) 
 FROM meal_coupon_inst
 WHERE for_meal = {0}""".format(meal_id)).first()
-
-		return raw_query
+		# self.db.session.expire(obj)
+		# self.db.session.refresh(obj)
+		return obj
 		
 #NotImplemented below
 

@@ -10,18 +10,18 @@ class Table_Meal_log_S(Base):
 	__tablename__ = "meal_coupon_inst"
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
-	for_meal = Column(Integer, ForeignKey("meal_menu.id"))
+	for_meal = Column(Integer, ForeignKey("intra_meal_table.id"))
 	owned_by = Column(Integer)
 	is_used = Column(Integer(1))
 	is_checked_admin = Column(Integer(1))
 	
 
 class Table_Meal_log_T(Base):
-	__tablename__ = "meal_teacher_log"
+	__tablename__ = "intra_meal_teacher_log"
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	user_id = Column(Integer)
-	for_meal = Column(Integer, ForeignKey("meal_menu.id"))
+	for_meal = Column(Integer, ForeignKey("intra_meal_table.id"))
 	count = Column(Integer)
 	modified_at = Column(Date)
 
@@ -31,7 +31,7 @@ class Table_Meal_log_T(Base):
 	
 
 class Table_Meal(Base):
-	__tablename__ = "meal_menu"
+	__tablename__ = "intra_meal_table"
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	title = Column(String)
@@ -64,6 +64,7 @@ class Table_Mealtime(Base):
 	time_name = Column(String)
 	start_time = Column(Time)
 	end_time = Column(Time)
+	type = Column(String(1))
 
 
 #Joined Table : Declarative

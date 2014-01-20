@@ -59,12 +59,12 @@ class ResultObject(Raiseable):
 			self._res.update(ResultObject.error_map[etype])
 
 
-	def from_Table_Meal(self, mealtable, mealstate):
-		mt = Mealtime(mealtable.meal_time)
+	def from_Table_Meal(self, mealtable, mealstate, target_type='s'):
+		mt = Mealtime(mealtable.meal_time, target_type)
 		mealdata_obj = {
 			"mealId" : mealtable.id,
 			"isServing" : mt.is_serving(),
-			"isUsableRFID" : mealtable.card_usable,
+			"isUsableRFIDCard" : True if mealtable.card_usable == 1 else False,
 			"mealName" : mealtable.title == "null" and str(mt) or mealtable.title,
 			"mealStartTime" : mt.get_start(),
 			"mealStopTime" : mt.get_stop(),
@@ -74,9 +74,9 @@ class ResultObject(Raiseable):
 		}
 		mealstate_obj = {
 			#is_used = 1
-			"processedUser" : str(mealstate[0]),
+			"processedUser" : mealstate[0] or 0,
 			#count all
-			"totalUser" : str(mealstate[1])
+			"totalUser" : mealstate[1] or 0
 		}
 		#id is required for "verify" obj
 		self._res['meal'] = {"mealData" : mealdata_obj, "mealState" : mealstate_obj}
