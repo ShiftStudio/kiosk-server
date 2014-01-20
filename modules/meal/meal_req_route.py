@@ -69,6 +69,7 @@ def verify(target):
 
 meal_type = ('B', 'L', 'D', 'S')
 
+
 #특정 날짜의 조/중/석/간식 중 하나를 JSON Format으로 받기
 @app.route('/meal/<date>/<time>')
 @app.route('/meal/<date>/<time>/<action>')
