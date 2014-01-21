@@ -43,7 +43,14 @@ class Meal:
 	def verify(self, sid, target, t_cnt=None):
 		#verify mealtime or not
 		try:
-			fid = self.get_now_id()
+			if target == "student":
+				fid = self.get_now_id(target_type='s')
+			elif target == "teacher":
+				fid = self.get_now_id(target_type='t')
+			else:
+				self.raise_error(ResultObject.DataError, "Meal_Now", e)
+				return self.res.get()
+
 			if fid is None:
 				self.raise_error(ResultObject.NotMealTime, "Meal_Now")
 				return self.res.get()
@@ -104,7 +111,7 @@ class Meal:
 				self.res.from_User_Student(user_by_bid, auth_result)
 
 			elif user_by_bid.user_type == "t":
-				if t_cnt < 1 or t_cnt > 10:
+				if not (int(t_cnt) >= 1 and int(t_cnt) <= 10):
 					self.raise_error(ResultObject.MealOutofRange, "t_cnt out of range : must between 1 and 10")
 					return self.res.get()
 
@@ -136,7 +143,7 @@ class Meal:
 		return self.res.get()
 
 	#getting meal info by date and mealtime
-	def get_by_dt(self, meal_date, meal_time=None, get_full=False):
+	def get_by_dt(self, meal_date, meal_time=None, get_full=False, target_type='s'):
 
 		# if 
 		# 	#returns all object(BLDS)
@@ -145,7 +152,7 @@ class Meal:
 			try:
 				meal_result = self.db.query(Table_Meal).\
 				filter_by(date=meal_date).filter_by(meal_time=meal_time).one()
-				self.res.from_Table_Meal(meal_result, self.get_meal_state(meal_result.id))
+				self.res.from_Table_Meal(meal_result, self.get_meal_state(meal_result.id), target_type)
 			except NoResultFound:
 				self.raise_error(self.res.MealNotFound, "MealData")
 			except Exception, e:
@@ -155,29 +162,29 @@ class Meal:
 
 
 	#getting current meal info
-	def get_now(self, get_full=None):
-		mealtype = Mealtime.get_current()
+	def get_now(self, get_full=None, target_type='s'):
+		mealtype = Mealtime.get_current(target_type=target_type)
 		# import pdb; pdb.set_trace()
 		if mealtype is None:
 			self.res.empty_Meal()
 			return self.res.get()
 		elif mealtype['current'] == True:
 			if get_full is None:
-				return self.get_by_dt(Today.today(), mealtype['time_code'], False)
+				return self.get_by_dt(Today.today(), mealtype['time_code'], False, target_type)
 			else:
-				return self.get_by_dt(Today.today(), mealtype['time_code'], True)
+				return self.get_by_dt(Today.today(), mealtype['time_code'], True, target_type)
 		elif mealtype['current'] == False:
 			if get_full is None:
-				return self.get_by_dt(Today.today(), mealtype['time_code'], False)
+				return self.get_by_dt(Today.today(), mealtype['time_code'], False, target_type)
 			else:
-				return self.get_by_dt(Today.today(), mealtype['time_code'], True)
+				return self.get_by_dt(Today.today(), mealtype['time_code'], True, target_type)
 
 		self.res.empty_Meal()
 		return self.res.get()
 
 	#getting current meal info
-	def get_now_id(self):
-		mealtype = Mealtime.get_current()
+	def get_now_id(self, target_type='s'):
+		mealtype = Mealtime.get_current(target_type=target_type)
 		if mealtype is None: # it will never occur
 			return None
 		elif mealtype['current'] == True:

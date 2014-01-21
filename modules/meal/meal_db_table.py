@@ -35,7 +35,7 @@ class Table_Meal(Base):
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	title = Column(String)
-	meal_time = Column(String(1), ForeignKey("meal_time.time_code"))
+	meal_time = Column(String(1))#,ForeignKey("meal_time.time_code"))
 	meal_json = Column(String)
 	quantity_json = Column(String)
 	nation_json = Column(String)

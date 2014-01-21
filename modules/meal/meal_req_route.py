@@ -6,6 +6,7 @@ from flask import Flask, request, abort, redirect, json
 from modules.database.db_engine import get_db_instance
 from modules.security import Security
 from modules.meal.meal_engine import Meal, Today
+import re
 
 app = Flask(__name__)
 meal = Meal()
@@ -16,6 +17,7 @@ ext_status = 0
 #result object
 s_res = {}
 
+user_agent_re = re.compile(r'ShiftKiosk\/([0-9\.]+)\ \(Windows\ NT\ ([0-9\.]+);\ \.NET\/([0-9\.]+); Meal; (Teacher|Student)\)')
 
 #redirect to intranet when connected with no args
 @app.route('/meal/')
@@ -119,7 +121,17 @@ def get_today_meal_full():
 def get_now_meal():
 	clear_response()	
 
-	now_meal = meal.get_now()
+	target = 's'
+	if(request.headers.get('User-Agent', '') != ''):
+		user_agent = request.headers.get('User-Agent')
+		searched = user_agent_re.search(user_agent)
+		if searched == None:
+			# return redirect("http://www.dimigo.hs.kr")
+			pass
+		else:
+			target = 't' if searched.groups()[3] == 'Teacher' else 's'
+
+	now_meal = meal.get_now(target_type=target)
 	return make_json_response(now_meal)
 
 #현재 급식 현황(MealState) 가져오기

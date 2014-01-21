@@ -37,9 +37,9 @@ class Mealtime:
 
 
 	@classmethod
-	def get_current(cls):
+	def get_current(cls, target_type='s'):
 		now = datetime.today().time()
-		mt_map = get_db_instance().query(Table_Mealtime)
+		mt_map = get_db_instance().query(Table_Mealtime).filter_by(type=target_type).all()
 
 		for mt in mt_map:
 			if mt.start_time < now < mt.end_time:
